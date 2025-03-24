@@ -4,7 +4,10 @@
   config,
   inputs,
   ...
-}: {
+}: let
+  DATABASE_DEV = "myapp_development";
+  DATABASE_TEST = "myapp_test";
+in {
   env = {
     # https://devenv.sh/basics/
     RUBY_DEBUG_HOST = "127.0.0.1";
@@ -49,31 +52,32 @@
     ];
     initialDatabases = [
       {
-        name = "myapp_development";
+        name = "${DATABASE_DEV}";
       }
       {
-        name = "myapp_test";
+        name = "${DATABASE_TEST}";
       }
     ];
     initialScript = ''
-      CREATE USER myapp_development WITH PASSWORD 'myapp_development';
-      ALTER ROLE myapp_development WITH LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE REPLICATION;
-      GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO myapp_development;
+      CREATE USER ${DATABASE_DEV} WITH PASSWORD '${DATABASE_DEV}';
+      ALTER ROLE ${DATABASE_DEV} WITH LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE REPLICATION;
+      GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${DATABASE_DEV};
 
-      CREATE USER myapp_test WITH PASSWORD 'myapp_test';
-      ALTER ROLE myapp_test WITH LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE REPLICATION;
-      GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO myapp_test;
+      CREATE USER ${DATABASE_TEST} WITH PASSWORD '${DATABASE_TEST}';
+      ALTER ROLE ${DATABASE_TEST} WITH LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE REPLICATION;
+      GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${DATABASE_TEST};
     '';
   };
 
   # https://devenv.sh/scripts/
-  scripts.hello.exec = ''
-    echo hello from $GREET
+  scripts.versions.exec = ''
+    ruby --version
+    rails --version
+    psql --version
   '';
 
   enterShell = ''
-    hello
-    git --version
+    versions
   '';
 
   # https://devenv.sh/tasks/
@@ -89,7 +93,10 @@
   '';
 
   # https://devenv.sh/git-hooks/
-  # git-hooks.hooks.shellcheck.enable = true;
+  git-hooks = {
+    hooks.check-added-large-files.enable = true;
+    hooks.check-merge-conflicts.enable = true;
+  };
 
   # See full reference at https://devenv.sh/reference/options/
 }
